@@ -74,17 +74,18 @@ export function compile(rankings: Rankings): AssignmentResult {
     }
   }
 
-  // Assign any remaining students (those who didn't rank all instructors)
-  for (const studentId of unassigned) {
-    for (const [instructorId, cap] of remaining) {
-      if (cap > 0) {
-        assignments[instructorId].push(studentId);
-        remaining.set(instructorId, cap - 1);
-        unassigned.delete(studentId);
-        break;
-      }
-    }
+  // Randomly assign remaining students to leftover slots
+  const unassignedArr = shuffle([...unassigned]);
+  const slotPool: string[] = [];
+  for (const [instructorId, cap] of remaining) {
+    for (let i = 0; i < cap; i++) slotPool.push(instructorId);
   }
+  const shuffledSlots = shuffle(slotPool);
+  unassignedArr.forEach((studentId, i) => {
+    const instructorId = shuffledSlots[i];
+    assignments[instructorId].push(studentId);
+    remaining.set(instructorId, (remaining.get(instructorId) ?? 0) - 1);
+  });
 
   for (const key of Object.keys(assignments)) {
     assignments[key].sort((a, b) => a - b);
